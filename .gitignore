@@ -17,6 +17,7 @@ config.log
 Makefile
 .deps/
 .libs/
+build*/
 *.lo
 *.o
 libsafewrite.la
