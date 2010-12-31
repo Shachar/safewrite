@@ -1,0 +1,20 @@
+Safewrite is a library for race free updates of existing files on POSIX systems.
+
+When updating an existing file, it is often overlooked how difficult it is to
+make sure that the file doesn't get hopelessly corrupted if something bad
+happens mid operation. Something bad can be the disk filling up, the program
+crashing, or the program receiving a signal (for example, due to system wide
+shutdown). All the above might happen at an unexpected point in time, and if
+the file is not correctly written, might result in a corrupt file.
+
+Safewrite provides an interface for opening and closing the file that, if used,
+gives the assurance that either the complete old or the complte new version of
+the file is left on disk, regardless of when the operation is interrupted.
+
+Safewrite was written by Shachar Shemesh.
+
+
+Safewrite is Copyright (C) 2010 by Lingnu Open Source Consulting Ltd.
+http://www.lingnu.com
+
+Safewrite is free software, and is distributed under the MIT license.
