@@ -39,47 +39,35 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
 {
     int fd;
     char newname[PATH_MAX];
-    struct stat state;
-    ssize_t sres; // Signed results
+
+    // Before doing anything else, resolve all symbolic links
+    if( realpath( buffer, newname )==NULL ) {
+        return -1;
+    }
+
+    // Make sure the buffer is big enough after the suffixes we need to add
+    if( strlen(newname)>PATH_MAX-5 ) {
+        errno=ENAMETOOLONG;
+
+        return -1;
+    }
+
+    // Update the original buffer and create the temporary file's name
+    strcpy( buffer, newname );
+    strcat( newname, ".tmp" );
 
     /*
-       Open the old file with the desired mode. This serves two purposes:
-       A. It makes sure that the user actually left us enough permissions to
-          open the file with the desired access.
-       B. It offloads the job of making sure there is no symbolic link loop to
-          the kernel.
+       At this point "buffer" is an absolute path to the actual file we want to replace. We no longer care about the
+       original path, only this new "real" one.
+
+       Open the old file with the desired mode. This makes sure that the user actually left us enough permissions to
+       open the file with the desired access.
      */
     flags &= ~(O_CREAT|O_TRUNC); // Do not create and do not truncate the old file.
     fd=open( buffer, flags );
     if( fd<0 && errno!=ENOENT )
         // Couldn't open a file for a reason other than it doesn't exist
         return -1;
-
-    // Resolve the symbolic links
-    while( (sres=readlink( buffer, buffer, PATH_MAX-1 ))>=0 ) {
-        // Make sure we're NULL terminated. Wash, rinse, repeat.
-        buffer[sres]='\0';
-    }
-
-    // The only legitimate reason for readlink to fail is if it does not point
-    // at a symlink, which results in errno=EINVAL.
-    if( errno!=EINVAL ) {
-        close(fd);
-
-        return -1;
-    }
-
-    // Make sure the buffer is big enough
-    if( strlen(buffer)>PATH_MAX-5 ) {
-        errno=ENAMETOOLONG;
-        close(fd);
-
-        return -1;
-    }
-
-    // Create the temporary file's name
-    strcpy( newname, buffer );
-    strcat( newname, ".tmp" );
 
     if( unlink( newname )<0 && errno!=ENOENT ) {
         // If the unlink failed, we won't be able to create the new file anyways
@@ -90,15 +78,22 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
 
     // Get the information about the existing file, if any
     if( fd>=0 ) {
+        // Old file exists
+        struct stat state;
+
         fstat( fd, &state );
 
         close(fd);
 
         // Open the file, creating if didn't already exist.
-        fd=open( newname, flags|O_CREAT|O_TRUNC, 0600 );
+        fd=open( newname, flags|O_CREAT|O_TRUNC, 0600 ); // Give very few permissions to avoid a race
 
         if( fd>=0 ) {
-            // The following two may fail for lack of permission, but we ignore this failure
+            /*
+               The fchowns may fail for lack of permission, but we ignore this failure as our only commitment is best
+               effort. We set the UID and the GID in separate system calls, as it is possible we have enough permissions
+               to do one but not the other.
+             */
             fchown( fd, state.st_uid, -1 ); 
             fchown( fd, -1, state.st_gid ); 
             fchmod( fd, state.st_mode&07777 );
@@ -115,9 +110,12 @@ int safe_close( const char buffer[PATH_MAX], int fd )
 {
     char newname[PATH_MAX];
 
+    // Make sure the data is actually on disk
+    fsync( fd ); // XXX Should we check for error?
+
     close(fd);
 
-    // Trust the user not to change buffer since the call to safe_open
+    // Trust the user not to change buffer since the call to safe_open, so no need to repeat the checks
     strcpy( newname, buffer );
     strcat( newname, ".tmp" );
 
