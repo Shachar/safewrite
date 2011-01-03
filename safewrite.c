@@ -139,10 +139,16 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
                The fchowns may fail for lack of permission, but we ignore this failure as our only commitment is best
                effort. We set the UID and the GID in separate system calls, as it is possible we have enough permissions
                to do one but not the other.
+
+               We do not copy the SUID and SGID flags unless the respective chown succeeded.
              */
-            fchown( fd, state.st_uid, -1 ); 
-            fchown( fd, -1, state.st_gid ); 
-            fchmod( fd, state.st_mode&07777 );
+            mode_t mask=01777;
+            if( fchown( fd, state.st_uid, -1 )==0 )
+                mask|=04000;
+            if( fchown( fd, -1, state.st_gid )==0 )
+                mask|=02000;
+
+            fchmod( fd, state.st_mode&mask );
         }
     } else {
         // No existing config file - create a new one with the desired mode
