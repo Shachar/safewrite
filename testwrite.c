@@ -74,8 +74,17 @@ int main( int argc, char *argv[] )
         return 2;
     }
 
+    char *string=malloc( strlen(argv[2])+2 );
+    if( string==NULL ) {
+        perror("memory allocation failure");
+
+        return 2;
+    }
+
+    sprintf( string, "%s\n", argv[2] );
     while( num>0 ) {
-        write( fd, argv[2], len );
+        write( fd, string, len+1 );
+        num--;
     }
 
     if( safe_close( buffer, fd )<0 ) {

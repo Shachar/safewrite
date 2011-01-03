@@ -45,7 +45,40 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
 
     // Before doing anything else, resolve all symbolic links
     if( realpath( buffer, newname )==NULL ) {
-        return -1;
+        char *filepart;
+
+        // Did we fail for file not found?
+        if( errno!=ENOENT )
+            return -1;
+        
+        // The file doesn't exist, try to resolve just the directory name.
+        filepart=strrchr( buffer, '/' );
+        if( filepart!=NULL ) {
+            // split the path into dir part and file part
+            *(filepart++)='\0';
+
+            if( realpath( buffer, newname )==NULL ) {
+                // Still can't resolve the path - lose all hope, curl in a corner and die
+                return -1;
+            }
+        } else {
+            // the original string did not contain any slashes, use the current dir as the "dir part" and "buffer" as the file part
+            filepart=buffer;
+
+            if( realpath( ".", newname )==NULL )
+                // Can't tell the full path of the directory we are actually in. Give up.
+                return -1;
+        }
+
+        // Do we have enough space for the combined string (dir name + file part + / + nul)?
+        if( strlen( newname ) + strlen( filepart ) > PATH_MAX-2 ) {
+            errno=ENAMETOOLONG;
+
+            return -1;
+        }
+
+        strcat( newname, "/" );
+        strcat( newname, filepart );
     }
 
     // Make sure the buffer is big enough after the suffixes we need to add
