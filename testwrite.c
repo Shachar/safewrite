@@ -1,7 +1,7 @@
 /*
    testwrite.c - test suite for the safewrite library
 
-   Copyright (c) 2010 Lingnu Open Source Consulting Ltd. http://www.lingnu.com
+   Copyright (c) 2010,2011 Lingnu Open Source Consulting Ltd. http://www.lingnu.com
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal

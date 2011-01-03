@@ -1,0 +1,72 @@
+.\" Copyright (C) 2011 Lingnu Open Source Consulting Ltd. (http://www.lingnu.com)
+.\"
+.\" Permission is hereby granted, free of charge, to any person obtaining a copy
+.\" of this software and associated documentation files (the "Software"), to deal
+.\" in the Software without restriction, including without limitation the rights
+.\" to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+.\" copies of the Software, and to permit persons to whom the Software is
+.\" furnished to do so, subject to the following conditions:
+.\"
+.\" The above copyright notice and this permission notice shall be included in
+.\" all copies or substantial portions of the Software.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+.\" IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+.\" FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+.\" AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+.\" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+.\" OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+.\" THE SOFTWARE.
+.TH SAFE_OPEN 3 "January 3, 2011" "Lingnu Open Source Consulting" "Safewrite Library Manual"
+.\" Please adjust this date whenever revising the manpage.
+.SH NAME
+safe_open, safe_close \- open a file for race free updating
+.SH SYNOPSIS
+.nf
+.B #include <limits.h>
+.B #include <sys/types.h>
+.B #include <sys/stat.h>
+.B #include <fcntl.h>
+.sp
+.B #include <safewrite.h>
+.sp
+.BI "int safe_open( char " path "[PATH_MAX], int " flags ", mode_t " mode ");"
+.sp
+.BI "int safe_close( const char " path "[PATH_MAX], int " fd ");"
+.BI "int safe_close_sync( const char " path "[PATH_MAX], int " fd ");"
+.SH DESCRIPTION
+.BR safe_open()
+opens/creates a file for race free updates. This means that the file is actually created with a temporary name, and gets
+renamed to the final name upon close. For that reason, among others, it is important to call \fBsafe_close\fR on file
+descriptors created using \fBsafe_open\fR.
+
+\fBsafe_open\fR's parameters are identical to those of \fBopen(2)\fR, except that the path component should be non-const
+and at least \fBPATH_MAX\fR bytes long. This buffer must be retained, untouched, until it is time to call one of the
+\fBsafe_close\fR variants.
+
+The \fIflags\fR argument need contain neither \fBO_CREAT\fR nor \fBO_TRUNC\fR. Those are assumed whether actually passed
+or not. This means that the file will get created if not existing, and the \fIfd\fR returned will always point to an
+empty file.
+
+\fBsafe_open\fR follows symbolic links (but see the BUGS section), and retains previous file ownership and mode on a
+best effort basis. 
+
+\fBsafe_close\fR need to receive the same buffer previously returned by \fBsafe_open\fR. Otherwise its use is the same
+as for \fBclose(2)\fR. It is NOT required for the program to call \fBsafe_close\fR with the same current directory as
+when safe_open was called, even if \fIpath\fR that was passed to \fBsafe_open\fR was relative.
+
+Immediately before calling \fBsafe_close\fR anyone asking for \fIpath\fR will receive the complete old version of the
+file. Immediately after called \fBsafe_close\fR, anyone asking for \fIpath\fR will receive the complete new version of
+the file. In case of an interruption of the actual operating system, however, anyone asking for \fIpath\fR after calling
+\fBsafe_close\fR will receive a complete version, but it is uncertain whether that will be the new or the old version.
+
+Upon successful return from \fBsafe_close_sync\fR, anyone asking for \fIpath\fR is guaranteed to receive the new version
+of file, even in case of an operating system interruption. Notice, however, that the warning given by \fBfsync(2)\fR
+about disk write caches applies here as well.
+.SH "RETURN VALUE"
+On success, \fBsafe_open\fR returns the file descriptor for the new file. On failure, \fBsafe_write\fR returns -1 and
+sets errno.
+
+On success, \fBsafe_close\fR and \fBsafe_close_sync\fR return zero. On failure, they return -1 and set errno. Upon
+error, the file descriptor may or may not be actually closed, depending on the errno returned. Whether closed or not,
+the old version of the file is the one that remains on disk.

@@ -9,3 +9,5 @@ libsafewrite_la_LDFLAGS = -version-info 0:0:0
 
 testwrite_SOURCES = testwrite.c
 testwrite_LDADD = libsafewrite.la
+
+man3_MANS = safe_open.man
