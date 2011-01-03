@@ -39,34 +39,53 @@ safe_open, safe_close \- open a file for race free updating
 opens/creates a file for race free updates. This means that the file is actually created with a temporary name, and gets
 renamed to the final name upon close. For that reason, among others, it is important to call \fBsafe_close\fR on file
 descriptors created using \fBsafe_open\fR.
-
-\fBsafe_open\fR's parameters are identical to those of \fBopen(2)\fR, except that the path component should be non-const
+.P
+\fBsafe_open\fR's parameters are identical to those of \fBopen\fR(2), except that the path component should be non-const
 and at least \fBPATH_MAX\fR bytes long. This buffer must be retained, untouched, until it is time to call one of the
 \fBsafe_close\fR variants.
-
+.P
 The \fIflags\fR argument need contain neither \fBO_CREAT\fR nor \fBO_TRUNC\fR. Those are assumed whether actually passed
 or not. This means that the file will get created if not existing, and the \fIfd\fR returned will always point to an
 empty file.
-
+.P
 \fBsafe_open\fR follows symbolic links (but see the BUGS section), and retains previous file ownership and mode on a
 best effort basis. 
-
+.P
 \fBsafe_close\fR need to receive the same buffer previously returned by \fBsafe_open\fR. Otherwise its use is the same
-as for \fBclose(2)\fR. It is NOT required for the program to call \fBsafe_close\fR with the same current directory as
+as for \fBclose\fR(2). It is NOT required for the program to call \fBsafe_close\fR with the same current directory as
 when safe_open was called, even if \fIpath\fR that was passed to \fBsafe_open\fR was relative.
-
+.P
 Immediately before calling \fBsafe_close\fR anyone asking for \fIpath\fR will receive the complete old version of the
 file. Immediately after called \fBsafe_close\fR, anyone asking for \fIpath\fR will receive the complete new version of
 the file. In case of an interruption of the actual operating system, however, anyone asking for \fIpath\fR after calling
 \fBsafe_close\fR will receive a complete version, but it is uncertain whether that will be the new or the old version.
-
+.P
 Upon successful return from \fBsafe_close_sync\fR, anyone asking for \fIpath\fR is guaranteed to receive the new version
-of file, even in case of an operating system interruption. Notice, however, that the warning given by \fBfsync(2)\fR
+of file, even in case of an operating system interruption. Notice, however, that the warning given by \fBfsync\fR(2)
 about disk write caches applies here as well.
 .SH "RETURN VALUE"
 On success, \fBsafe_open\fR returns the file descriptor for the new file. On failure, \fBsafe_write\fR returns -1 and
 sets errno.
-
+.P
 On success, \fBsafe_close\fR and \fBsafe_close_sync\fR return zero. On failure, they return -1 and set errno. Upon
 error, the file descriptor may or may not be actually closed, depending on the errno returned. Whether closed or not,
-the old version of the file is the one that remains on disk.
+the old version of the file is the one that remains on disk at \fIpath\fR.
+.SH ERRORS
+\fBsafe_open\fR may return all the errors that \fBopen\fR(2) might return, plus the following:
+.TP
+.B ENAMETOOLONG
+\fIpath\fR refers to a name that is nested too deeply to be represented by PATH_MAX.
+.P
+If \fBsafe_close\fR or \fBsafe_close_sync\fR return any of the error codes defined by \fBclose\fR(2), then the file
+descriptor might still be open. Otherwise, the file descriptor is closed, but \fIpath\fR still has the old version of
+the file.
+.SH "CONFORMING TO"
+These functions are a custom library, and do not conform to any standard.
+.SH BUGS
+If \fIpath\fR points to a dangling symbolic link, we would, ideally, probably want \fBsafe_open\fR to create the file at
+the path pointed to by the symbolic link. Instead, the symbolic link itself will be replaced. The problem does not
+affect symbolic links that point to existing files.
+.SH "SEE ALSO"
+.BR open "(2), " close "(2), " rename "(2), " fsync (2)
+.SH AUTHOR
+This man page was written by Shachar Shemesh for Lingnu Open Source Consulting Ltd. http://www.lingnu.com
