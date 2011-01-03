@@ -1,7 +1,7 @@
 /*
    safewrite.c - race free file update helper functions.
 
-   Copyright (c) 2010 Lingnu Open Source Consulting Ltd. http://www.lingnu.com
+   Copyright (c) 2010,2011 Lingnu Open Source Consulting Ltd. http://www.lingnu.com
 
    Permission is hereby granted, free of charge, to any person obtaining a copy
    of this software and associated documentation files (the "Software"), to deal
@@ -165,7 +165,8 @@ int safe_close( const char buffer[PATH_MAX], int fd )
     // Make sure the data is actually on disk
     fsync( fd ); // XXX Should we check for error?
 
-    close(fd);
+    if( close(fd)<0 )
+        return -1;
 
     // Trust the user not to change buffer since the call to safe_open, so no need to repeat the checks
     strcpy( newname, buffer );
