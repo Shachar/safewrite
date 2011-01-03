@@ -20,7 +20,7 @@
 .TH SAFE_OPEN 3 "January 3, 2011" "Lingnu Open Source Consulting" "Safewrite Library Manual"
 .\" Please adjust this date whenever revising the manpage.
 .SH NAME
-safe_open, safe_close \- open a file for race free updating
+safe_open, safe_close, safe_close_sync \- open a file for race free updating
 .SH SYNOPSIS
 .nf
 .B #include <limits.h>
