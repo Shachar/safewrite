@@ -62,7 +62,8 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
                 return -1;
             }
         } else {
-            // the original string did not contain any slashes, use the current dir as the "dir part" and "buffer" as the file part
+            // the original string did not contain any slashes, use the current dir as the "dir part" and "buffer" as
+            // the file part
             filepart=buffer;
 
             if( realpath( ".", newname )==NULL )
@@ -79,6 +80,15 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
 
         strcat( newname, "/" );
         strcat( newname, filepart );
+
+        /*
+           XXX At this point, if "filepart" is a symbolic link to a non-existing file, ideally, we would have liked for
+           the symbolic link destination to be created. What will happen here is that, instead, the symbolic link itself
+           will be replaced.
+
+           While, as mentioned, not ideal, the alternative is to re-implement "realpath" so that it does not fail if the
+           last component of the path does not exist.
+         */
     }
 
     // Make sure the buffer is big enough after the suffixes we need to add
