@@ -8,7 +8,7 @@ shutdown). All the above might happen at an unexpected point in time, and if
 the file is not correctly written, might result in a corrupt file.
 
 Safewrite provides an interface for opening and closing the file that, if used,
-gives the assurance that either the complete old or the complte new version of
+gives the assurance that either the complete old or the complete new version of
 the file is left on disk, regardless of when the operation is interrupted.
 
 Safewrite was written by Shachar Shemesh.
