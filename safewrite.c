@@ -174,3 +174,28 @@ int safe_close( const char buffer[PATH_MAX], int fd )
 
     return rename( newname, buffer );
 }
+
+int safe_close_sync( char path[PATH_MAX], int fd)
+{
+    int ret=safe_close( path, fd );
+
+    if( ret>=0 ) {
+        // Search for the separator between the last directory and the actual file
+        char *sep=strrchr( path, '/' );
+
+        // If the flow was followed correctly, path should be an absolute path, and sep should be valid. Let's not
+        // assume this, however.
+        if( sep!=NULL )
+            *sep='\0';
+        else
+            strcpy( path, "." );
+
+        fd=open( path, O_WRONLY );
+        if( fd<0 )
+            return -1;
+
+        ret=fsync( fd );
+    }
+
+    return ret;
+}

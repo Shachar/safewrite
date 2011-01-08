@@ -32,8 +32,8 @@ safe_open, safe_close, safe_close_sync \- open a file for race free updating
 .sp
 .BI "int safe_open( char " path "[PATH_MAX], int " flags ", mode_t " mode ");"
 .sp
-.BI "int safe_close( const char " path "[PATH_MAX], int " fd ");"
-.BI "int safe_close_sync( const char " path "[PATH_MAX], int " fd ");"
+.BI "int safe_close( char " path "[PATH_MAX], int " fd ");"
+.BI "int safe_close_sync( char " path "[PATH_MAX], int " fd ");"
 .SH DESCRIPTION
 .BR safe_open()
 opens/creates a file for race free updates. This means that the file is actually created with a temporary name, and gets
@@ -68,17 +68,20 @@ On success, \fBsafe_open\fR returns the file descriptor for the new file. On fai
 sets errno.
 .P
 On success, \fBsafe_close\fR and \fBsafe_close_sync\fR return zero. On failure, they return -1 and set errno. Upon
-error, the file descriptor may or may not be actually closed, depending on the errno returned. Whether closed or not,
-the old version of the file is the one that remains on disk at \fIpath\fR.
+error, the file descriptor may or may not be actually closed, depending on the errno returned.
 .SH ERRORS
 \fBsafe_open\fR may return all the errors that \fBopen\fR(2) might return, plus the following:
 .TP
 .B ENAMETOOLONG
 \fIpath\fR refers to a name that is nested too deeply to be represented by PATH_MAX.
 .P
-If \fBsafe_close\fR or \fBsafe_close_sync\fR return any of the error codes defined by \fBclose\fR(2), then the file
+If \fBsafe_close\fR returns any of the error codes defined by \fBclose\fR(2), then the file
 descriptor might still be open. Otherwise, the file descriptor is closed, but \fIpath\fR still has the old version of
 the file.
+.P
+The return codes for \fBsafe_close_sync\fR are the same as for \fBsafe_close\fR, except it is possible that the call
+will fail, and yet it is the new version of the file that will be visible. There is no reliable way to determine whether
+that is the case.
 .SH "CONFORMING TO"
 These functions are a custom library, and do not conform to any standard.
 .SH BUGS

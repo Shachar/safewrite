@@ -12,4 +12,10 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode );
  */
 int safe_close( const char buffer[PATH_MAX], int fd );
 
+/**
+ * The same as safe_close, except also sync the directory in which the new file was created. This has the effect of
+ * assuring that its the new version of the file that is visible on disk.
+ */
+int safe_close_sync( char path[PATH_MAX], int fd);
+
 #endif /* SAFEWRITE_H */
