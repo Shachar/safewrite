@@ -163,7 +163,8 @@ int safe_close( const char buffer[PATH_MAX], int fd )
     char newname[PATH_MAX];
 
     // Make sure the data is actually on disk
-    fsync( fd ); // XXX Should we check for error?
+    if( fsync( fd )<0 )
+        return -1;
 
     if( close(fd)<0 )
         return -1;
