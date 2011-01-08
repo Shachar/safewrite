@@ -132,7 +132,7 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
         close(fd);
 
         // Open the file, creating if didn't already exist.
-        fd=open( newname, flags|O_CREAT|O_TRUNC, 0600 ); // Give very few permissions to avoid a race
+        fd=open( newname, flags|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600 ); // Give very few permissions to avoid a race
 
         if( fd>=0 ) {
             /*
