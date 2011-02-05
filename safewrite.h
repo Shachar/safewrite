@@ -1,6 +1,10 @@
 #ifndef SAFEWRITE_H
 #define SAFEWRITE_H
 
+#if __cplusplus
+extern "C" {
+#endif
+
 /**
  * An open(2) replacement. "context" must be retained until safe_close.
  */
@@ -16,5 +20,9 @@ int safe_close( int fd, void **context );
  * assuring that its the new version of the file that is visible on disk.
  */
 int safe_close_sync( int fd, void **context );
+
+#if __cplusplus
+}
+#endif
 
 #endif /* SAFEWRITE_H */
