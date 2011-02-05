@@ -25,7 +25,6 @@
 #include "config.h"
 #endif
 
-#include <limits.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
