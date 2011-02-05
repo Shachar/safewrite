@@ -50,12 +50,6 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    if( strlen( argv[1] )>PATH_MAX-1 ) {
-        fprintf( stderr, "safewrite: param 1 is too long\n" );
-
-        return 1;
-    }
-
     num=strtoul( argv[3], NULL, 10 );
 
     len=strlen( argv[2] );
