@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.67])
-AC_INIT([safewrite], [0.01])
+AC_INIT([safewrite], [0.02], [], [], [http://www.lingnu.com])
 AC_CONFIG_SRCDIR([safewrite.h])
 AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4])
