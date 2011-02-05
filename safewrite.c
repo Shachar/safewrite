@@ -38,13 +38,18 @@
 
 #include "safewrite.h"
 
-int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
+#define TMP_EXT ".tmp"
+#define TMP_EXT_LEN 4
+
+int safe_open( const char *path, int flags, mode_t mode, void **_context )
 {
     int fd;
-    char newname[PATH_MAX];
+    char **context=(char **)_context;
+    char *tmppath;
 
     // Before doing anything else, resolve all symbolic links
-    if( realpath( buffer, newname )==NULL ) {
+    if( (*context=realpath( path, NULL ))==NULL ) {
+        char *path_copy, *path_copy2=NULL;
         char *filepart;
 
         // Did we fail for file not found?
@@ -52,34 +57,35 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
             return -1;
         
         // The file doesn't exist, try to resolve just the directory name.
-        filepart=strrchr( buffer, '/' );
+        path_copy=strdup( path );
+        filepart=strrchr( path_copy, '/' );
         if( filepart!=NULL ) {
             // split the path into dir part and file part
             *(filepart++)='\0';
 
-            if( realpath( buffer, newname )==NULL ) {
+            if( (path_copy2=realpath( path, NULL ))==NULL ) {
                 // Still can't resolve the path - lose all hope, curl in a corner and die
+                free( path_copy );
+
                 return -1;
             }
         } else {
             // the original string did not contain any slashes, use the current dir as the "dir part" and "buffer" as
             // the file part
-            filepart=buffer;
+            filepart=path_copy;
 
-            if( realpath( ".", newname )==NULL )
+            if( (path_copy2=realpath( ".", NULL ))==NULL ) {
                 // Can't tell the full path of the directory we are actually in. Give up.
+                free( path_copy );
+
                 return -1;
+            }
         }
 
-        // Do we have enough space for the combined string (dir name + file part + / + nul)?
-        if( strlen( newname ) + strlen( filepart ) > PATH_MAX-2 ) {
-            errno=ENAMETOOLONG;
-
-            return -1;
-        }
-
-        strcat( newname, "/" );
-        strcat( newname, filepart );
+        *context=malloc( strlen(path_copy2)+strlen(filepart)+2 ); // Room for dir + "/" + file part + nul
+        sprintf(*context, "%s/%s", path_copy2, filepart );
+        free( path_copy2 );
+        free( path_copy );
 
         /*
            XXX At this point, if "filepart" is a symbolic link to a non-existing file, ideally, we would have liked for
@@ -91,35 +97,29 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
          */
     }
 
-    // Make sure the buffer is big enough after the suffixes we need to add
-    if( strlen(newname)>PATH_MAX-5 ) {
-        errno=ENAMETOOLONG;
-
-        return -1;
-    }
-
-    // Update the original buffer and create the temporary file's name
-    strcpy( buffer, newname );
-    strcat( newname, ".tmp" );
-
     /*
-       At this point "buffer" is an absolute path to the actual file we want to replace. We no longer care about the
+       At this point "context" is an absolute path to the actual file we want to replace. We no longer care about the
        original path, only this new "real" one.
 
        Open the old file with the desired mode. This makes sure that the user actually left us enough permissions to
        open the file with the desired access.
      */
     flags &= ~(O_CREAT|O_TRUNC); // Do not create and do not truncate the old file.
-    fd=open( buffer, flags );
+    fd=open( *context, flags );
     if( fd<0 && errno!=ENOENT )
         // Couldn't open a file for a reason other than it doesn't exist
-        return -1;
+        goto error;
 
-    if( unlink( newname )<0 && errno!=ENOENT ) {
+    // Create the temporary file's name
+    tmppath=malloc(strlen(*context)+TMP_EXT_LEN+1);
+    sprintf(tmppath, "%s%s", *context, TMP_EXT);
+
+    if( unlink( tmppath )<0 && errno!=ENOENT ) {
         // If the unlink failed, we won't be able to create the new file anyways
         close(fd);
+        free(tmppath);
 
-        return -1;
+        goto error;
     }
 
     // Get the information about the existing file, if any
@@ -132,7 +132,7 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
         close(fd);
 
         // Open the file, creating if didn't already exist.
-        fd=open( newname, flags|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600 ); // Give very few permissions to avoid a race
+        fd=open( tmppath, flags|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600 ); // Give very few permissions to avoid a race
 
         if( fd>=0 ) {
             /*
@@ -152,15 +152,24 @@ int safe_open( char buffer[PATH_MAX], int flags, mode_t mode )
         }
     } else {
         // No existing config file - create a new one with the desired mode
-        fd=open( newname, flags|O_CREAT|O_TRUNC, mode );
+        fd=open( tmppath, flags|O_CREAT|O_TRUNC, mode );
     }
 
+    free( tmppath );
+
     return fd;
+error:
+    free(*context);
+    *context=NULL;
+
+    return -1;
 }
 
-int safe_close( const char buffer[PATH_MAX], int fd )
+int safe_close( int fd, void **_context )
 {
-    char newname[PATH_MAX];
+    char **context=(char **)_context;
+    char *tmppath;
+    int ret;
 
     // Make sure the data is actually on disk
     if( fsync( fd )<0 )
@@ -169,16 +178,25 @@ int safe_close( const char buffer[PATH_MAX], int fd )
     if( close(fd)<0 )
         return -1;
 
-    // Trust the user not to change buffer since the call to safe_open, so no need to repeat the checks
-    strcpy( newname, buffer );
-    strcat( newname, ".tmp" );
+    tmppath=malloc(strlen(*context)+TMP_EXT_LEN+1);
+    sprintf(tmppath, "%s%s", *context, tmppath);
 
-    return rename( newname, buffer );
+    ret=rename( tmppath, *context );
+
+    free( tmppath );
+    free( *context );
+    *context=NULL;
+
+    return ret;
 }
 
-int safe_close_sync( char path[PATH_MAX], int fd)
+int safe_close_sync( int fd, void **context )
 {
-    int ret=safe_close( path, fd );
+    int ret;
+    char *path;
+
+    path=strdup( (const char *)*context );
+    ret=safe_close( fd, context );
 
     if( ret>=0 ) {
         // Search for the separator between the last directory and the actual file
@@ -192,11 +210,16 @@ int safe_close_sync( char path[PATH_MAX], int fd)
             strcpy( path, "." );
 
         fd=open( path, O_WRONLY );
-        if( fd<0 )
+        if( fd<0 ) {
+            free( path );
+
             return -1;
+        }
 
         ret=fsync( fd );
     }
+
+    free( path );
 
     return ret;
 }

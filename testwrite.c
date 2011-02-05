@@ -39,9 +39,9 @@
 
 int main( int argc, char *argv[] )
 {
-    char buffer[PATH_MAX];
     int fd;
     size_t num, len;
+    void *safewrite_context;
 
     if( argc<4 ) {
         printf("Usage: testwrite filename str num\n"
@@ -56,8 +56,6 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    strcpy( buffer, argv[1] );
-
     num=strtoul( argv[3], NULL, 10 );
 
     len=strlen( argv[2] );
@@ -67,7 +65,7 @@ int main( int argc, char *argv[] )
         return 1;
     }
 
-    fd=safe_open( buffer, O_WRONLY, 0666 );
+    fd=safe_open( argv[1], O_WRONLY, 0666, &safewrite_context );
     if( fd<0 ) {
         perror( "safewrite: Failed to open file" );
 
@@ -87,7 +85,7 @@ int main( int argc, char *argv[] )
         num--;
     }
 
-    if( safe_close( buffer, fd )<0 ) {
+    if( safe_close( fd, &safewrite_context )<0 ) {
         perror( "safewrite: Failure while closing the file" );
 
         return 2;
