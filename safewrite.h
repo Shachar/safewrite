@@ -2,13 +2,12 @@
 #define SAFEWRITE_H
 
 /**
- * An open(2) replacement. The main difference is that the buffer must be PATH_MAX long, and will be changed by the
- * call.
+ * An open(2) replacement. "context" must be retained until safe_close.
  */
 int safe_open( const char *name, int flags, mode_t mode, void **context );
 
 /**
- * A close(2) replacement. "buffer" must be the same buffer returned from safe_open.
+ * A close(2) replacement. "context" must be the same buffer returned from safe_open.
  */
 int safe_close( int fd, void **context );
 
