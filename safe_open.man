@@ -17,7 +17,7 @@
 .\" LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 .\" OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 .\" THE SOFTWARE.
-.TH SAFE_OPEN 3 "February 5, 2011" "Lingnu Open Source Consulting" "Safewrite Library Manual"
+.TH SAFE_OPEN 3 "February 22, 2011" "Lingnu Open Source Consulting" "Safewrite Library Manual"
 .\" Please adjust this date whenever revising the manpage.
 .SH NAME
 safe_open, safe_close, safe_close_sync \- open a file for race free updating
@@ -78,4 +78,6 @@ affect symbolic links that point to existing files.
 .SH "SEE ALSO"
 .BR open "(2), " close "(2), " rename "(2), " fsync (2)
 .SH AUTHOR
-This man page was written by Shachar Shemesh for Lingnu Open Source Consulting Ltd. http://www.lingnu.com
+This man page was written by Shachar Shemesh for Lingnu Open Source Consulting Ltd.
+.SH HOME PAGE
+http://www.lingnu.com/opensource/libsafewrite.html

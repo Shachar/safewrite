@@ -5,7 +5,7 @@ noinst_PROGRAMS = testwrite
 include_HEADERS = safewrite.h
 
 libsafewrite_la_SOURCES = safewrite.c
-libsafewrite_la_LDFLAGS = -version-info 0:0:0
+libsafewrite_la_LDFLAGS = -version-info 1:0:0
 
 testwrite_SOURCES = testwrite.c
 testwrite_LDADD = libsafewrite.la
