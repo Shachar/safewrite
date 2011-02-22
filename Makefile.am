@@ -11,3 +11,4 @@ testwrite_SOURCES = testwrite.c
 testwrite_LDADD = libsafewrite.la
 
 man3_MANS = safe_open.man safe_close.man safe_close_sync.man
+EXTRA_DIST = safe_open.man safe_close.man safe_close_sync.man

@@ -1,2 +1,5 @@
+Version 1.01 - Feb 22 2011
+    * Make sure that "make dist" works properly.
+
 Version 1.00 - Feb 22 2011
     * Initial release
