@@ -39,8 +39,8 @@ opens/creates a file for race free updates. This means that the file is actually
 renamed to the final name upon close. For that reason, among others, it is important to call \fBsafe_close\fR on file
 descriptors created using \fBsafe_open\fR.
 .P
-\fBsafe_open\fR's parameters are identical to those of \fBopen\fR(2), except that an extra point to a \fBvoid *\fR needs
-to be supplied. This variable must be retained, untouched, until it is time to call one of the \fBsafe_close\fR
+\fBsafe_open\fR's parameters are identical to those of \fBopen\fR(2), except that an extra pointer to a \fBvoid *\fR
+needs to be supplied. This variable must be retained, untouched, until it is time to call one of the \fBsafe_close\fR
 variants.
 .P
 The \fIflags\fR argument need contain neither \fBO_CREAT\fR nor \fBO_TRUNC\fR. Those are assumed whether actually passed
