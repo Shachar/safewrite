@@ -79,7 +79,7 @@ int main( int argc, char *argv[] )
         num--;
     }
 
-    if( safe_close( fd, &safewrite_context )<0 ) {
+    if( safe_close_sync( fd, &safewrite_context )<0 ) {
         perror( "safewrite: Failure while closing the file" );
 
         return 2;

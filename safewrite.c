@@ -62,7 +62,7 @@ int safe_open( const char *path, int flags, mode_t mode, void **_context )
             // split the path into dir part and file part
             *(filepart++)='\0';
 
-            if( (path_copy2=realpath( path, NULL ))==NULL ) {
+            if( (path_copy2=realpath( path_copy, NULL ))==NULL ) {
                 // Still can't resolve the path - lose all hope, curl in a corner and die
                 free( path_copy );
 
@@ -178,7 +178,7 @@ int safe_close( int fd, void **_context )
         return -1;
 
     tmppath=malloc(strlen(*context)+TMP_EXT_LEN+1);
-    sprintf(tmppath, "%s%s", *context, tmppath);
+    sprintf(tmppath, "%s%s", *context, TMP_EXT);
 
     ret=rename( tmppath, *context );
 
@@ -208,7 +208,7 @@ int safe_close_sync( int fd, void **context )
         else
             strcpy( path, "." );
 
-        fd=open( path, O_WRONLY );
+        fd=open( path, O_RDONLY );
         if( fd<0 ) {
             free( path );
 
@@ -216,6 +216,8 @@ int safe_close_sync( int fd, void **context )
         }
 
         ret=fsync( fd );
+
+        close( fd );
     }
 
     free( path );
