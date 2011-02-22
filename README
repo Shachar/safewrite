@@ -14,7 +14,7 @@ the file is left on disk, regardless of when the operation is interrupted.
 Safewrite was written by Shachar Shemesh.
 
 Safewrite is Copyright (C) 2010,2011 by Lingnu Open Source Consulting Ltd.
-http://www.lingnu.com
+http://www.lingnu.com/opensource/safewrite.html
 
 Safewrite is free software, and is distributed under the MIT license.
 
