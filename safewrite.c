@@ -129,14 +129,15 @@ int safe_open( const char *path, int flags, mode_t mode, void **_context )
         // Old file exists
         struct stat state;
 
-        fstat( fd, &state );
+        if( fstat( fd, &state )<0 )
+            saved_error=errno; // In the unlikely case that fstat failed, mark it through saved_error
 
         close(fd);
 
         // Open the file, creating if didn't already exist.
         fd=open( tmppath, flags|O_CREAT|O_TRUNC|O_NOFOLLOW, 0600 ); // Give very few permissions to avoid a race
 
-        if( fd>=0 ) {
+        if( fd>=0 && saved_error==0 ) {
             /*
                The fchowns may fail for lack of permission, but we ignore this failure as our only commitment is best
                effort. We set the UID and the GID in separate system calls, as it is possible we have enough permissions
