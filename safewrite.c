@@ -45,6 +45,7 @@ int safe_open( const char *path, int flags, mode_t mode, void **_context )
     int fd;
     char **context=(char **)_context;
     char *tmppath;
+    int saved_error=0;
 
     // Before doing anything else, resolve all symbolic links
     if( (*context=realpath( path, NULL ))==NULL ) {
@@ -115,10 +116,12 @@ int safe_open( const char *path, int flags, mode_t mode, void **_context )
 
     if( unlink( tmppath )<0 && errno!=ENOENT ) {
         // If the unlink failed, we won't be able to create the new file anyways
+        saved_error=errno;
+
         close(fd);
         free(tmppath);
 
-        goto error;
+        goto error_saved;
     }
 
     // Get the information about the existing file, if any
@@ -157,6 +160,9 @@ int safe_open( const char *path, int flags, mode_t mode, void **_context )
     free( tmppath );
 
     return fd;
+error_saved:
+    errno=saved_error;
+
 error:
     free(*context);
     *context=NULL;
