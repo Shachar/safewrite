@@ -1,3 +1,6 @@
+Version 1.03 - Oct 12 2013
+    * Update home page
+
 Version 1.02 - Mar 11 2011
     * errno overwrite bug.
     * Check return code of fflush

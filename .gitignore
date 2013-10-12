@@ -21,3 +21,4 @@ build*/
 *.lo
 *.o
 libsafewrite.la
+.*.swp
